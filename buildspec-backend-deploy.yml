@@ -12,7 +12,7 @@ phases:
     commands:
       - echo "Setting up kubeconfig"
       - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION --role-arn arn:aws:iam::969317006731:role/codebuild-eks-deploy-role
-      - kubectl version --short
+      - kubectl version
 
   build:
     commands:

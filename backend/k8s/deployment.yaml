@@ -1,0 +1,21 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdf-app
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pdf-app
+  template:
+    metadata:
+      labels:
+        app: pdf-app
+    spec:
+      containers:
+      - name: pdf-app
+        image: 969317006731.dkr.ecr.us-east-1.amazonaws.com/repo-1:latest
+        ports:
+        - containerPort: 8000

@@ -13,7 +13,7 @@ app = FastAPI(title="PDF Backend Service")
 # CORS middleware for S3 frontend
 # -------------------------------
 origins = [
-    "http://pdf-app-python.s3-website-us-east-1.amazonaws.com/frontend/index.html",  # your S3 frontend URL
+    "http://pdf-app-python.s3-website-us-east-1.amazonaws.com",  # your S3 frontend URL
     "http://localhost:8000"  # optional for local testing
 ]
 

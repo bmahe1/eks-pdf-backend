@@ -4,6 +4,7 @@ metadata:
   name: pdf-backend-svc
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-subnets: "subnet-074c3700287b2dccb,subnet-0232d46ce5b17e987"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "8080"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/"
@@ -14,3 +15,5 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
+  externalTrafficPolicy: Local
+

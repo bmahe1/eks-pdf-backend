@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdf-backend
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pdf-backend
+  template:
+    metadata:
+      labels:
+        app: pdf-backend
+    spec:
+      containers:
+        - name: pdf-backend
+          image: 969317006731.dkr.ecr.us-east-1.amazonaws.com/repo-1:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: pdf-storage
+              mountPath: /app/uploads
+      volumes:
+        - name: pdf-storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdf-backend-svc
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+    app: pdf-backend
+  ports:
+    - port: 80
+      targetPort: 8080

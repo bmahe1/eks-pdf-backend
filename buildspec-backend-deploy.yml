@@ -21,8 +21,11 @@ phases:
   build:
     commands:
       - echo "Deploying manifests"
-      - kubectl apply -f k8s/
+      - kubectl apply -f k8s/ --recursive
+      - echo "Waiting for deployment rollout"
+      - kubectl rollout status deployment/pdf-backend
 
   post_build:
     commands:
+      - kubectl get svc -A
       - kubectl get pods -A

@@ -8,17 +8,26 @@ env:
     DEPLOYMENT_FILE: "k8s-deployment.yaml"
 
 phases:
+  install:
+    runtime-versions:
+      python: 3.10
+    commands:
+      - echo "Installing kubectl"
+      - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      - chmod +x kubectl
+      - mv kubectl /usr/local/bin/
+      - kubectl version --client
+
   pre_build:
     commands:
       - echo "Setting up kubeconfig"
-      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION --role-arn arn:aws:iam::969317006731:role/codebuild-eks-deploy-role
-      - kubectl version
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+      - kubectl get nodes
 
   build:
     commands:
-      - echo "Applying Kubernetes manifests"
+      - echo "Deploying to EKS"
       - kubectl apply -f $DEPLOYMENT_FILE --validate=false
-      - echo "Rollout status"
       - kubectl rollout status deployment/pdf-backend -n $NAMESPACE
 
 artifacts:

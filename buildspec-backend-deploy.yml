@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws eks update-kubeconfig --name pdf-cluster --region us-east-1
+
+  build:
+    commands:
+      - kubectl apply -f k8s-deployment.yaml
+
+artifacts:
+  files:
+    - '**/*'

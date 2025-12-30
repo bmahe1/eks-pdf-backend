@@ -4,32 +4,25 @@ env:
   variables:
     CLUSTER_NAME: "pdf-cluster"
     AWS_REGION: "us-east-1"
-    NAMESPACE: "default"
-    DEPLOYMENT_FILE: "k8s-deployment.yaml"
 
 phases:
   install:
-    runtime-versions:
-      python: 3.10
     commands:
-      - echo "Installing kubectl"
-      - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      - curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
       - chmod +x kubectl
       - mv kubectl /usr/local/bin/
-      - kubectl version --client
 
   pre_build:
     commands:
-      - echo "Setting up kubeconfig"
+      - echo "Configuring kubeconfig"
       - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
       - kubectl get nodes
 
   build:
     commands:
-      - echo "Deploying to EKS"
-      - kubectl apply -f $DEPLOYMENT_FILE --validate=false
-      - kubectl rollout status deployment/pdf-backend -n $NAMESPACE
+      - echo "Deploying manifests"
+      - kubectl apply -f k8s/
 
-artifacts:
-  files:
-    - "**/*"
+  post_build:
+    commands:
+      - kubectl get pods -A

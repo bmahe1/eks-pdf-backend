@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    CLUSTER_NAME: "pdf-cluster"
+    CLUSTER_NAME: "cluster-1"
     AWS_REGION: "us-east-1"
 
 phases:

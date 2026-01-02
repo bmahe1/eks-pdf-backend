@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    CLUSTER_NAME: "cluster-1"
+    CLUSTER_NAME: "app-cluster"
     AWS_REGION: "us-east-1"
 
 phases:

@@ -1,7 +1,5 @@
 version: 0.2
 
-# NO credentials in the buildspec file!
-# They come from CodeBuild environment variables
 phases:
   install:
     commands:
@@ -20,7 +18,7 @@ phases:
       - echo "Environment check:"
       - echo "CLUSTER_NAME: $CLUSTER_NAME"
       - echo "AWS_REGION: $AWS_REGION"
-      - echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:0:8}..."  # Show only first 8 chars
+      - echo "AWS_ACCESS_KEY_ID is set: $(if [ -n \"$AWS_ACCESS_KEY_ID\" ]; then echo 'YES'; else echo 'NO'; fi)"
       
       # Configure AWS CLI (region only - credentials are already in env)
       - aws configure set region $AWS_REGION
@@ -31,10 +29,7 @@ phases:
       
       # Configure EKS access
       - echo "Configuring EKS access..."
-      - aws eks update-kubeconfig \
-          --name $CLUSTER_NAME \
-          --region $AWS_REGION \
-          --alias eks-codebuild
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION --alias eks-codebuild
       
       # Test EKS access
       - echo "Testing EKS cluster access..."

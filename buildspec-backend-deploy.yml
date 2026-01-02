@@ -8,26 +8,51 @@ env:
 phases:
   install:
     commands:
+      - echo "=== INSTALL PHASE ==="
       - curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
       - chmod +x kubectl
       - mv kubectl /usr/local/bin/
+      - echo "Kubectl installed"
 
   pre_build:
     commands:
-      - echo "Checking AWS credentials"
+      - echo "=== PRE-BUILD PHASE ==="
+      
+      # Debug: Show current identity
+      - echo "1. AWS Identity:"
       - aws sts get-caller-identity
-      - echo "Configuring kubeconfig"
-      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+      - echo ""
+      
+      # Debug: Check EKS access
+      - echo "2. Testing EKS API access:"
+      - aws eks describe-cluster --name $CLUSTER_NAME --region $AWS_REGION --query cluster.status && echo "✓ EKS access OK" || echo "✗ EKS access FAILED"
+      - echo ""
+      
+      # Create kubeconfig with verbose output
+      - echo "3. Creating kubeconfig..."
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION --verbose
+      - echo ""
+      
+      # Debug: Show kubeconfig
+      - echo "4. Kubeconfig contents:"
+      - cat /root/.kube/config
+      - echo ""
+      
+      # Debug: Test kubectl auth
+      - echo "5. Testing kubectl auth..."
+      - kubectl auth can-i get nodes --all-namespaces
+      - kubectl auth can-i create pods
+      - echo ""
+      
+      # Test with increased verbosity
+      - echo "6. Testing kubectl get nodes (verbose)..."
+      - kubectl get nodes --v=6
+      
+      # Final test
+      - echo "7. Final test - kubectl get nodes:"
       - kubectl get nodes
 
   build:
     commands:
-      - echo "Deploying manifests"
-      - kubectl apply -f k8s/ --recursive
-      - echo "Waiting for deployment rollout"
-      - kubectl rollout status deployment/pdf-backend
-
-  post_build:
-    commands:
-      - kubectl get svc -A
-      - kubectl get pods -A
+      - echo "=== BUILD PHASE ==="
+      - echo "Build would continue here..."

@@ -1,58 +1,71 @@
 version: 0.2
 
-env:
-  variables:
-    CLUSTER_NAME: "app-cluster"
-    AWS_REGION: "us-east-1"
-
+# NO credentials in the buildspec file!
+# They come from CodeBuild environment variables
 phases:
   install:
     commands:
-      - echo "=== INSTALL PHASE ==="
+      - echo "=== INSTALLING DEPENDENCIES ==="
+      - echo "Installing kubectl..."
       - curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
       - chmod +x kubectl
       - mv kubectl /usr/local/bin/
-      - echo "Kubectl installed"
+      - echo "Kubectl version: $(kubectl version --client --short)"
 
   pre_build:
     commands:
-      - echo "=== PRE-BUILD PHASE ==="
+      - echo "=== PRE-BUILD CONFIGURATION ==="
       
-      # Debug: Show current identity
-      - echo "1. AWS Identity:"
+      # Verify environment variables are set
+      - echo "Environment check:"
+      - echo "CLUSTER_NAME: $CLUSTER_NAME"
+      - echo "AWS_REGION: $AWS_REGION"
+      - echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:0:8}..."  # Show only first 8 chars
+      
+      # Configure AWS CLI (region only - credentials are already in env)
+      - aws configure set region $AWS_REGION
+      
+      # Verify AWS identity
+      - echo "AWS Identity:"
       - aws sts get-caller-identity
-      - echo ""
       
-      # Debug: Check EKS access
-      - echo "2. Testing EKS API access:"
-      - aws eks describe-cluster --name $CLUSTER_NAME --region $AWS_REGION --query cluster.status && echo "✓ EKS access OK" || echo "✗ EKS access FAILED"
-      - echo ""
+      # Configure EKS access
+      - echo "Configuring EKS access..."
+      - aws eks update-kubeconfig \
+          --name $CLUSTER_NAME \
+          --region $AWS_REGION \
+          --alias eks-codebuild
       
-      # Create kubeconfig with verbose output
-      - echo "3. Creating kubeconfig..."
-      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION --verbose
-      - echo ""
+      # Test EKS access
+      - echo "Testing EKS cluster access..."
+      - kubectl config get-contexts
+      - kubectl config use-context eks-codebuild
+      - kubectl cluster-info
       
-      # Debug: Show kubeconfig
-      - echo "4. Kubeconfig contents:"
-      - cat /root/.kube/config
-      - echo ""
-      
-      # Debug: Test kubectl auth
-      - echo "5. Testing kubectl auth..."
-      - kubectl auth can-i get nodes --all-namespaces
-      - kubectl auth can-i create pods
-      - echo ""
-      
-      # Test with increased verbosity
-      - echo "6. Testing kubectl get nodes (verbose)..."
-      - kubectl get nodes --v=6
-      
-      # Final test
-      - echo "7. Final test - kubectl get nodes:"
+      # Get nodes (this was failing before)
+      - echo "Getting EKS nodes..."
       - kubectl get nodes
+      - echo "✅ EKS access successful!"
 
   build:
     commands:
       - echo "=== BUILD PHASE ==="
-      - echo "Build would continue here..."
+      - echo "Deploying Kubernetes manifests..."
+      
+      # Deploy your application
+      - kubectl apply -f k8s/ --recursive
+      
+      # Wait for deployments
+      - echo "Waiting for deployments to be ready..."
+      - kubectl rollout status deployment/pdf-backend --timeout=300s
+      
+      # Check resources
+      - echo "Deployment status:"
+      - kubectl get deployments,svc,pods -A
+
+  post_build:
+    commands:
+      - echo "=== POST-BUILD ==="
+      - echo "Build completed successfully!"
+      - echo "Application URLs:"
+      - kubectl get svc -o wide

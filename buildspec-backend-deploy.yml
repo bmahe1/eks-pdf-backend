@@ -14,6 +14,8 @@ phases:
 
   pre_build:
     commands:
+      - echo "Checking AWS credentials"
+      - aws sts get-caller-identity
       - echo "Configuring kubeconfig"
       - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
       - kubectl get nodes
